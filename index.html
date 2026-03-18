@@ -137,6 +137,7 @@
     
     .highlight { font-weight: 800; font-size: 1.25rem; }
     .verdict-text { margin-top: 20px !important; text-align: center; font-size: 1.25rem !important; font-weight: bold; }
+    .suggested-kwp { background: #fee2e2; padding: 10px; border-radius: 8px; margin-top: 15px; border: 1px dashed var(--danger); }
 
     .footer-copyright {
       text-align: center; margin-top: 30px; padding: 20px 10px;
@@ -217,7 +218,7 @@
       <hr>
       <p><strong>Fabbisogno Combinato Totale: <span id="res_tot">0</span> kWh</strong></p>
       <p>Limite Massimo FV Ammesso (+5% tolleranza): <span id="res_limit" class="highlight">0</span> kWh</p>
-      <p id="res_verdict" class="verdict-text"></p>
+      <div id="res_verdict" class="verdict-text"></div>
     </div>
 
     <div class="footer-copyright">
@@ -349,10 +350,18 @@
 
       if (prodFv > 0 && prodFv <= limiteMassimo) {
         resultBox.className = 'result-box pass';
-        verdict.innerHTML = "✅ VERIFICA SUPERATA<br><span style='font-size: 1rem; font-weight: normal;'>La produzione stimata FV (" + prodFv.toLocaleString('it-IT') + " kWh) rientra nel limite ammissibile.</span>";
+        verdict.innerHTML = "✅ VERIFICA SUPERATA<br><span style='font-size: 1rem; font-weight: normal;'>La produzione stimata FV (" + prodFv.toLocaleString('it-IT', {maximumFractionDigits: 2}) + " kWh) rientra nel limite ammissibile.</span>";
       } else if (prodFv > limiteMassimo) {
         resultBox.className = 'result-box fail';
-        verdict.innerHTML = "❌ VERIFICA FALLITA<br><span style='font-size: 1rem; font-weight: normal;'>La produzione stimata FV (" + prodFv.toLocaleString('it-IT') + " kWh) SUPERA il limite massimo consentito.</span>";
+        
+        // Calcolo della potenza massima installabile se la produzione specifica è valida
+        let maxKwpHtml = "";
+        if (prodSpecifica > 0) {
+          const maxKwp = limiteMassimo / prodSpecifica;
+          maxKwpHtml = `<div class='suggested-kwp'>Potenza di Picco Massima Ammissibile: <br><span style='font-size: 1.5rem; color: var(--danger);'>${maxKwp.toLocaleString('it-IT', {maximumFractionDigits: 2})} kWp</span></div>`;
+        }
+
+        verdict.innerHTML = "❌ VERIFICA FALLITA<br><span style='font-size: 1rem; font-weight: normal;'>La produzione stimata FV (" + prodFv.toLocaleString('it-IT', {maximumFractionDigits: 2}) + " kWh) SUPERA il limite massimo consentito.</span>" + maxKwpHtml;
       } else {
         resultBox.className = 'result-box fail';
         verdict.innerHTML = "⚠️ INCOMPLETO<br><span style='font-size: 1rem; font-weight: normal;'>Inserisci valori validi per la Potenza di Picco e la Produzione Specifica.</span>";
